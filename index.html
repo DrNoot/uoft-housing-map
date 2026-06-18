@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>UofT MD — Apartment Shortlist Map (commute · gym · subway)</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root{
+    --fitz:#ff5a6e; --wb:#4ea8ff; --shared:#b07cf0; --campus:#d9b53c;
+    --t1:#2ee66f; --t2:#00c6cc; --t3:#f0883e;
+    --bg:#14161b; --panel:#1c1f26; --ink:#e9ebee; --muted:#969ca6;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  #map{position:absolute;inset:0}
+  .panel{position:absolute;z-index:1000;background:rgba(28,31,38,.95);
+    border:1px solid #2c303a;border-radius:12px;backdrop-filter:blur(6px);
+    box-shadow:0 8px 28px rgba(0,0,0,.5)}
+  #info{top:14px;left:14px;max-width:360px;padding:15px 17px}
+  #info h1{margin:0 0 5px;font-size:16px;letter-spacing:.2px}
+  #info .sub{color:var(--muted);font-size:12px;line-height:1.45;margin:0 0 8px}
+  #info p{margin:6px 0 0;font-size:12px;line-height:1.5;color:#d3d6dd}
+  #info .x{position:absolute;top:11px;right:12px;cursor:pointer;color:var(--muted);font-size:12px;background:none;border:none}
+  #info.collapsed .body{display:none}
+  #legend{bottom:16px;left:14px;padding:11px 14px;font-size:12px;max-width:250px}
+  #legend h2{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+  #legend .grp{margin-top:8px;border-top:1px solid #2c303a;padding-top:7px}
+  .row{display:flex;align-items:center;gap:9px;margin:4px 0}
+  .dot{width:13px;height:13px;border-radius:50%;flex:none;border:2px solid #fff2}
+  .dot.dash{border-style:dashed;border-color:#fff5}
+  .dot.sm{width:9px;height:9px;border-width:1px}
+  .sq{width:16px;height:11px;border-radius:3px;flex:none;opacity:.85}
+  .mk{display:flex;align-items:center;justify-content:center;font-weight:800;color:#0d0f14;
+    box-shadow:0 2px 8px rgba(0,0,0,.55);line-height:1}
+  .mk .plus{font-size:15px;margin-top:-1px}
+  .leaflet-popup-content-wrapper{background:#20232c;color:var(--ink);border-radius:10px}
+  .leaflet-popup-tip{background:#20232c}
+  .leaflet-popup-content{margin:12px 14px;font-size:12.6px;line-height:1.5;max-width:260px}
+  .leaflet-popup-content b{color:#fff}
+  .pp-role{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:999px;margin-bottom:6px}
+  .pp-meta{color:var(--muted);font-size:11px;margin-top:6px}
+  .leaflet-control-layers{background:#1c1f26 !important;color:var(--ink);border:1px solid #2c303a !important;border-radius:10px !important}
+  .leaflet-control-layers-expanded{padding:8px 10px !important;font-size:12px}
+  .viewbtns{display:flex;gap:6px}
+  .viewbtns button{background:#252934;color:var(--ink);border:1px solid #353b47;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:600}
+  .viewbtns button:hover{background:#2f3543}
+  a{color:#7cc0ff}
+  .listing-link{display:inline-block;margin-top:7px;font-weight:600}
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="info" class="panel">
+  <button class="x" onclick="document.getElementById('info').classList.toggle('collapsed')">hide</button>
+  <h1>Apartment Shortlist — WB-ranked</h1>
+  <div class="body">
+    <p class="sub"><b>Ranked by modeled weekly commute</b> for a Wightman-Berris MS1: MSB (~3×/wk) + WB clinical sites (Toronto General + Toronto Western, ~2×/wk) + <b>the gym (6×/wk)</b>, with floor-based elevator time included. Click a pin for the breakdown + live listing.</p>
+    <p><b style="color:var(--t1)">● Tier 1</b> lowest commute · <b style="color:var(--t2)">● Tier 2</b> mid · <b style="color:var(--t3)">● Tier 3</b> highest</p>
+    <p class="sub" style="margin-top:8px">🏋 <b>The gym is the swing factor.</b> Only <b>488 University</b> has a confirmed real in-building gym, so its 6×/wk gym trip is ~0 → lowest total (~221 min/wk). Everywhere else means trekking to the UofT AC/Goldring, which is why central-but-gym-far picks (e.g. 111 Elizabeth) rank low — unless their gym turns out real on tour.</p>
+    <p class="sub" style="margin-top:6px">⚠ Schedule came from one WB student at Toronto Western (west); your clinical site may be Mount Sinai / Toronto General (central) — a TGH↔TWH shuttle exists. Yellow dashed = WB sites; red dashed = 506 streetcar.</p>
+  </div>
+</div>
+
+<div id="legend" class="panel">
+  <h2>Legend</h2>
+  <div class="row"><span class="dot" style="background:var(--t1)"></span> Tier 1 — lowest weekly commute</div>
+  <div class="row"><span class="dot" style="background:var(--t2)"></span> Tier 2 — mid</div>
+  <div class="row"><span class="dot" style="background:var(--t3)"></span> Tier 3 — highest</div>
+  <div class="grp">
+    <div class="row"><span style="width:16px;height:0;border-top:2px dashed #ffd24d;flex:none"></span> WB in-person triangle</div>
+    <div class="row"><span style="width:16px;height:0;border-top:2px dashed #e0242a;flex:none"></span> 506 streetcar → Toronto Western</div>
+    <div class="row"><span class="dot" style="background:var(--wb)"></span> Wightman-Berris hospital</div>
+    <div class="row"><span class="dot" style="background:var(--fitz)"></span> FitzGerald hospital</div>
+    <div class="row"><span class="dot" style="background:var(--campus)"></span> MSB (M) + gyms (A·H·G)</div>
+    <div class="row"><span style="width:16px;height:3px;background:#f5c518;flex:none;border-radius:2px"></span> Line 1 &nbsp;<span style="width:16px;height:3px;background:#21b35a;border-radius:2px"></span> Line 2</div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map=L.map('map',{zoomControl:true}).setView([43.6620,-79.3905],14);
+L.control.scale({imperial:false}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  {attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:19}).addTo(map);
+
+const C={fitz:'#ff5a6e',wb:'#4ea8ff',shared:'#b07cf0',campus:'#d9b53c',
+  t1:'#2ee66f',t2:'#00c6cc',t3:'#f0883e'};
+
+function hIcon(color,tier){
+  const size=tier==='anchor'?32:tier==='primary'?28:23;
+  const border=(tier==='community'||tier==='rehab')?'2px dashed rgba(255,255,255,.65)':'2.5px solid rgba(255,255,255,.92)';
+  const big=(tier==='anchor'||tier==='primary');
+  return L.divIcon({className:'',iconSize:[size,size],iconAnchor:[size/2,size/2],
+    html:`<div class="mk" style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:${border}"><span class="plus" style="font-size:${big?16:13}px">+</span></div>`});
+}
+function sIcon(color,label,shape){
+  if(shape==='tiny')return L.divIcon({className:'',iconSize:[9,9],iconAnchor:[4,4],
+    html:`<div style="width:9px;height:9px;border-radius:50%;background:#888;border:1px solid #fff6"></div>`});
+  const sz=24;
+  return L.divIcon({className:'',iconSize:[sz,sz],iconAnchor:[sz/2,sz/2],
+    html:`<div class="mk" style="width:${sz}px;height:${sz}px;border-radius:50%;background:${color};border:2.5px solid rgba(255,255,255,.92);font-size:11px">${label||'+'}</div>`});
+}
+function candIcon(color,rank){
+  return L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],
+    html:`<div class="mk" style="width:28px;height:28px;border-radius:50% 50% 50% 2px;background:${color};border:2.5px solid #fff;font-size:13px;color:#0d0f14">${rank}</div>`});
+}
+function pop(role,color,title,body,meta){
+  return `<span class="pp-role" style="background:${color}22;color:${color};border:1px solid ${color}66">${role}</span>
+    <div><b>${title}</b></div><div style="margin-top:4px">${body}</div>
+    ${meta?`<div class="pp-meta">${meta}</div>`:''}`;
+}
+
+/* ===================== CANDIDATE SHORTLIST (12 units / 10 buildings) ===================== */
+const TC={1:C.t1,2:C.t2,3:C.t3};
+const TNAME={1:'TIER 1 — TOP PICK',2:'TIER 2 — STRONG',3:'TIER 3 — FINE'};
+// Ranked by modeled weekly commute (MSB 3x + Hospital[TGH+TWH] + Gym 6x, incl. floor-based elevator time)
+const CAND=[
+ {rank:1,tier:1,la:43.65503,ln:-79.38900,n:"488 University ★ seen",
+  units:"#4609 · $2,400 · fl46 · 544 sqft · 1BD",
+  cw:"~221 min/wk — LOWEST · MSB 80 · Hosp 69 · Gym 72",
+  gym:"✅ Real gym (SkyClub @480 University, free): rack, barbells, dumbbells, pool — no AC trek.",
+  why:"You've seen & liked it. University Ave, St Patrick L1, ~6 min to TGH. Caveat: floor 46.",
+  url:"https://condos.ca/toronto/the-residences-of-488-university-avenue-488-university-ave/unit-4609-C13454062"},
+ {rank:2,tier:1,la:43.65745,ln:-79.40166,n:"297 College",
+  units:"#1008 · $2,450 · fl10 · 1+1 (500-599 sqft)",
+  cw:"~271 min/wk · MSB 86 · Hosp 56 · Gym 129",
+  gym:"❓ Own gym unverified — but Goldring/AC ~10 min, so the gym stays cheap.",
+  why:"On the 506 to Toronto Western; closest to the UofT gyms. ⚠ small 1+1 — verify a real bedroom.",
+  url:"https://condos.ca/toronto/the-college-condominium-at-spadina-297-college-st/unit-1008-C13437058"},
+ {rank:3,tier:2,la:43.66680,ln:-79.38867,n:"U Condos — 1080 Bay",
+  units:"#1808 · $2,450 · fl18 (corner)<br>#1005 · $2,080 · fl10 ⚠ furnished, bedroom locked off",
+  cw:"~350 min/wk · MSB 83 · Hosp 99 · Gym 168",
+  gym:"❓ 'Cardio & weights' room, no rack/barbell confirmed → likely AC trek (×6).",
+  why:"Cleanest building (Pemberton 2016). Verify #1808's bedroom is walled.",
+  url:"https://condos.ca/toronto/u-condominium-57-75-st-mary-st-1074-1086-bay-st/unit-1808-C13426474"},
+ {rank:4,tier:2,la:43.66200,ln:-79.38650,n:"Burano — 832 Bay",
+  units:"#501 · $2,300 · fl5 (612 sqft)",
+  cw:"~351 min/wk · MSB 54 · Hosp 74 · Gym 223",
+  gym:"❓ unconfirmed → Goldring trek (×6) drives the total up.",
+  why:"Closest to MSB; central, clean Lanterra 2012. Only a low-floor unit (fl5).",
+  url:"https://condos.ca/toronto/burano-on-bay-832-bay-st/unit-501-C13219866"},
+ {rank:5,tier:2,la:43.66479,ln:-79.38697,n:"The Britt — 955 Bay",
+  units:"#1715 · $2,490 · fl17 · 1+1 (500-599)",
+  cw:"~361 min/wk · MSB 72 · Hosp 90 · Gym 200",
+  gym:"❓ cardio-leaning (yoga + spin) → AC/Goldring trek likely.",
+  why:"Lanterra 5/5, Wellesley station. ⚠ small 1+1 — verify a real bedroom.",
+  url:"https://condos.ca/toronto/the-britt-condos-955-bay-st-995-bay-st/unit-1715-C13415056"},
+ {rank:6,tier:2,la:43.66681,ln:-79.38753,n:"Polo Club — 1055 Bay",
+  units:"#1209 · $2,350 · fl12 · 1+1, 600-699 (utils incl)<br>#809 · $2,000 · fl8 (value)",
+  cw:"~368 min/wk · MSB 86 · Hosp 100 · Gym 183",
+  gym:"❓ gym + squash, unconfirmed → Goldring trek.",
+  why:"SAFEST real bedroom (1987 build = real walls). Quiet Tridel.",
+  url:"https://condos.ca/toronto/polo-club-i-1055-bay-st/unit-1209-C13425618"},
+ {rank:7,tier:3,la:43.66562,ln:-79.38262,n:"50 Wellesley E",
+  units:"#807 · $2,300 · fl8 · 1+1 (500-599)",
+  cw:"~466 min/wk · MSB 100 · Hosp 106 · Gym 259",
+  gym:"❓ unconfirmed → long Goldring trek.",
+  why:"NE corner; furthest Yonge-side from the WB University-Ave sites.",
+  url:"https://condos.ca/toronto/1605-wellesley-street-east-toronto/unit-807-C13221042"},
+ {rank:8,tier:3,la:43.65759,ln:-79.38361,n:"Minto Plaza — 38 Elm",
+  units:"#2507 · $2,349 · fl25 · ~750 sqft (biggest)",
+  cw:"~481 min/wk · MSB 85 · Hosp 80 · Gym 316",
+  gym:"🟡 best condo gym of the rest (dumbbells 75lb + benches + machines) but NO barbell/rack → still AC for barbell days.",
+  why:"Biggest unit by far (~750 sqft = real bedroom); high floor (25).",
+  url:"https://condos.ca/toronto/minto-plaza-38-elm-st/unit-2507-C13447476"},
+ {rank:9,tier:3,la:43.65505,ln:-79.38475,n:"111 Elizabeth (One City Hall)",
+  units:"#1620 · $2,500 · fl16 · 1+1 (600-699 sqft), parking",
+  cw:"~489 min/wk — but ~240 IF its weight room is real · MSB 91 · Hosp 77 · Gym 321",
+  gym:"❓ Has a DEDICATED weight room — verify it; a rack/barbell would jump this to ~#2.",
+  why:"Best hospital location (next to TGH). Gym distance is its only weakness — the gym tour decides it.",
+  url:"https://condos.ca/toronto/one-city-hall-place-111-elizabeth-st/unit-1620-C13451102"},
+ {rank:10,tier:3,la:43.66889,ln:-79.38353,n:"55C — 55 Charles E",
+  units:"#807 · $2,500 · fl8 (south-facing, 9ft ceilings)",
+  cw:"~489 min/wk · MSB 121 · Hosp 122 · Gym 247",
+  gym:"🟡 'olympic lifting area' claim unverified (evidence was a different club).",
+  why:"New (2024), south-facing (CN-Tower/light), Bloor-Yonge subway; furthest from the WB sites.",
+  url:"https://condos.ca/toronto/55c-condos-55-charles-st-e/unit-807-C13219244"},
+];
+const candLayer=L.layerGroup();
+CAND.forEach(c=>{
+  L.marker([c.la,c.ln],{icon:candIcon(TC[c.tier],c.rank)}).bindPopup(
+    pop(TNAME[c.tier],TC[c.tier],`#${c.rank} ${c.n}`,
+      `${c.units}
+       <div style="margin-top:6px"><b style="color:#fff">⏱ ${c.cw}</b></div>
+       <div style="margin-top:4px;font-size:11.5px">${c.gym}</div>
+       <div style="margin-top:5px;color:#cfd3da">${c.why}</div>`,
+      `<a class="listing-link" href="${c.url}" target="_blank" rel="noopener">View listing &#8599;</a>`)
+  ).addTo(candLayer);
+});
+
+/* ===================== HOSPITALS (context) ===================== */
+const HOSP=[
+ {a:'fitz',t:'anchor',la:43.6532,ln:-79.3775,n:"St. Michael's Hospital",ad:'30 Bond St',r:"FITZGERALD — ANCHOR",d:"Level-1 trauma; ortho PD Dr. Hall + APD Dr. Ward; your Fitz MS3 core ortho block."},
+ {a:'fitz',t:'community',la:43.6390,ln:-79.4498,n:"St. Joseph's Health Centre",ad:'30 The Queensway',r:"FITZGERALD — COMMUNITY",d:"Unity Health community teaching site (west end)."},
+ {a:'fitz',t:'rehab',la:43.7127,ln:-79.2853,n:"Providence Healthcare",ad:'3276 St. Clair Ave E',r:"FITZGERALD — REHAB",d:"Post-acute rehab/LTC (far east)."},
+ {a:'wb',t:'anchor',la:43.6590,ln:-79.3886,n:"Toronto General Hospital",ad:'200 Elizabeth St',r:"WIGHTMAN-BERRIS — UHN ANCHOR",d:"UHN flagship; large learner stack."},
+ {a:'wb',t:'primary',la:43.6536,ln:-79.4055,n:"Toronto Western Hospital",ad:'399 Bathurst St',r:"WIGHTMAN-BERRIS — UHN",d:"Renowned hand & spine / MSK."},
+ {a:'wb',t:'primary',la:43.6582,ln:-79.3907,n:"Princess Margaret",ad:'610 University Ave',r:"WIGHTMAN-BERRIS — UHN",d:"Oncology; MSK/sarcoma surgery."},
+ {a:'wb',t:'rehab',la:43.6566,ln:-79.3886,n:"Toronto Rehab",ad:'550 University Ave',r:"WIGHTMAN-BERRIS — UHN REHAB",d:"PM&R / post-op MSK rehab."},
+ {a:'wb',t:'rehab',la:43.6890,ln:-79.5083,n:"West Park Healthcare",ad:'170 Emmett Ave',r:"WIGHTMAN-BERRIS — REHAB",d:"Rehab (far NW)."},
+ {a:'wb',t:'anchor',la:43.6574,ln:-79.3905,n:"Mount Sinai Hospital",ad:'600 University Ave',r:"WIGHTMAN-BERRIS — SINAI ANCHOR",d:"Sinai anchor; medicine/Ob-Gyn/surgery."},
+ {a:'wb',t:'rehab',la:43.6664,ln:-79.3544,n:"Hennick Bridgepoint",ad:'1 Bridgepoint Dr',r:"WIGHTMAN-BERRIS — SINAI",d:"Complex continuing care / rehab (east)."},
+ {a:'wb',t:'community',la:43.6898,ln:-79.3257,n:"Michael Garron Hospital",ad:'825 Coxwell Ave',r:"WIGHTMAN-BERRIS — COMMUNITY",d:"Core WB community clerkship (East York)."},
+ {a:'wb',t:'community',la:43.7238,ln:-79.4894,n:"Humber River Hospital",ad:'1235 Wilson Ave',r:"WIGHTMAN-BERRIS — COMMUNITY",d:"NW community acute care."},
+ {a:'wb',t:'community',la:43.7282,ln:-79.4291,n:"Baycrest",ad:'3560 Bathurst St',r:"WIGHTMAN-BERRIS — GERIATRICS",d:"Geriatrics teaching (North)."},
+ {a:'shared',t:'primary',la:43.6571,ln:-79.3885,n:"SickKids",ad:'555 University Ave',r:"SHARED — ALL ACADEMIES",d:"Pediatrics clerkship for every academy."},
+ {a:'shared',t:'community',la:43.6446,ln:-79.4176,n:"CAMH",ad:'1001 Queen St W',r:"SHARED — ALL ACADEMIES",d:"Psychiatry clerkship for every academy."},
+];
+const COLOR={fitz:C.fitz,wb:C.wb,shared:C.shared};
+const groups={fitz:L.layerGroup(),wb:L.layerGroup(),shared:L.layerGroup()};
+HOSP.forEach(h=>L.marker([h.la,h.ln],{icon:hIcon(COLOR[h.a],h.t)})
+  .bindPopup(pop(h.r,COLOR[h.a],h.n,h.d,h.ad)).addTo(groups[h.a]));
+
+/* ===================== CAMPUS: MSB + 3 GYMS ===================== */
+const campus=L.layerGroup([
+  L.marker([43.6604,-79.3923],{icon:sIcon(C.campus,'M')}).bindPopup(pop('CAMPUS',C.campus,"Medical Sciences Building",
+    "Anatomy labs + exams for every academy.","1 King's College Circle")),
+  L.marker([43.6669,-79.3983],{icon:sIcon(C.campus,'G')}).bindPopup(pop('UofT GYM',C.campus,"Goldring Centre (G)",
+    "Premium iron: racks + free weights + platforms. Best lifting gym on campus.","100 Devonshire Place")),
+  L.marker([43.6639,-79.3940],{icon:sIcon(C.campus,'H')}).bindPopup(pop('UofT GYM',C.campus,"Hart House (H)",
+    "Closest to MSB (~3 min); free weights + racks, smaller.","7 Hart House Circle")),
+  L.marker([43.6628,-79.4010],{icon:sIcon(C.campus,'A')}).bindPopup(pop('UofT GYM',C.campus,"Athletic Centre (A)",
+    "Most racks: SCC (4 tiers) + Weightlifting Zone + Field House. Pools + track.","55 Harbord St")),
+]);
+
+/* ===================== SUBWAY ===================== */
+const LINE1=[[43.6977,-79.3973],[43.6878,-79.3931],[43.6824,-79.3905],[43.6772,-79.3886],[43.6709,-79.3857],[43.6655,-79.3838],[43.6614,-79.3829],[43.6561,-79.3803],[43.6524,-79.3790],[43.6489,-79.3777],[43.6452,-79.3806],[43.6476,-79.3848],[43.6509,-79.3866],[43.6549,-79.3884],[43.6597,-79.3905],[43.6670,-79.3935],[43.6680,-79.3998],[43.6673,-79.4039],[43.6745,-79.4071]];
+const LINE2=[[43.6644,-79.4185],[43.6663,-79.4111],[43.6673,-79.4039],[43.6680,-79.3998],[43.6700,-79.3905],[43.6709,-79.3857],[43.6716,-79.3766],[43.6736,-79.3687],[43.6769,-79.3585],[43.6779,-79.3520],[43.6786,-79.3450],[43.6800,-79.3380],[43.6826,-79.3303],[43.6840,-79.3229]];
+const subway=L.layerGroup();
+L.polyline(LINE1,{color:'#f5c518',weight:4,opacity:.9}).bindTooltip('Line 1 — Yonge-University',{sticky:true}).addTo(subway);
+L.polyline(LINE2,{color:'#21b35a',weight:4,opacity:.9}).bindTooltip('Line 2 — Bloor-Danforth',{sticky:true}).addTo(subway);
+[['Bloor-Yonge',43.6709,-79.3857],['Wellesley',43.6655,-79.3838],['College',43.6614,-79.3829],['Dundas',43.6561,-79.3803],['Queen',43.6524,-79.3790],['Queen’s Park',43.6597,-79.3905],['Museum',43.6670,-79.3935],['St. Patrick',43.6549,-79.3884],['Osgoode',43.6509,-79.3866],['St. George',43.6680,-79.3998],['Spadina',43.6673,-79.4039],['Bay',43.6700,-79.3905]].forEach(([t,la,ln])=>
+  L.marker([la,ln],{icon:sIcon(null,null,'tiny')}).bindTooltip(t,{direction:'top',offset:[0,-4]}).addTo(subway));
+
+/* ===================== LIVING ZONES ===================== */
+const fitzZone=L.polygon([[43.6655,-79.3895],[43.6650,-79.3745],[43.6515,-79.3735],[43.6515,-79.3895]],
+  {color:C.fitz,weight:1.5,fillColor:C.fitz,fillOpacity:0.14}).bindPopup(pop('LIVING ZONE',C.fitz,"Optimal for FitzGerald","Downtown-east core near St. Mike's + MSB."));
+const wbZone=L.polygon([[43.6700,-79.4120],[43.6690,-79.3855],[43.6515,-79.3850],[43.6520,-79.4110]],
+  {color:C.wb,weight:1.5,fillColor:C.wb,fillOpacity:0.12}).bindPopup(pop('LIVING ZONE',C.wb,"Optimal for Wightman-Berris","University corridor west to Annex/Harbord/Kensington."));
+const zones=L.layerGroup([wbZone,fitzZone]);
+
+/* ===================== WB COMMUTE TRIANGLE + 506 STREETCAR ===================== */
+const wbTri=L.polygon([[43.6604,-79.3923],[43.6536,-79.4055],[43.6590,-79.3886]],
+  {color:'#ffd24d',weight:2,dashArray:'6 5',fill:false}).bindPopup(
+  pop('WB IN-PERSON SITES',C.wb,"WB MS1 commute triangle",
+  "MSB (lectures/exams) · Toronto Western (CBL/portfolio, west) · Toronto General–Eaton (Thu clinical skills). Your assigned clinical site varies; a TGH↔TWH shuttle exists.","From a real WB MS1 calendar"));
+const streetcar506=L.polyline([[43.65660,-79.40723],[43.65784,-79.40064],[43.65913,-79.39376],[43.65978,-79.39075],[43.66095,-79.38540],[43.66130,-79.38320],[43.66198,-79.37922],[43.66238,-79.37686],[43.66422,-79.36815]],
+  {color:'#e0242a',weight:3,dashArray:'4 4',opacity:.9}).bindTooltip('506 College/Carlton streetcar (→ Toronto Western)',{sticky:true});
+subway.addLayer(streetcar506);
+const wbAnchors=L.layerGroup([wbTri]);
+
+/* ===================== ADD LAYERS (candidates + key context ON by default) ===================== */
+candLayer.addTo(map); wbAnchors.addTo(map); groups.fitz.addTo(map); groups.wb.addTo(map); campus.addTo(map); subway.addTo(map);
+
+L.control.layers(null,{
+ '<span style="color:#7fe8a0;font-weight:600">★ Shortlist (WB-ranked)</span>':candLayer,
+ '<span style="color:#ffd24d">WB commute triangle</span>':wbAnchors,
+ '<span style="color:#ff8a96">FitzGerald hospitals</span>':groups.fitz,
+ '<span style="color:#8cc4ff">Wightman-Berris hospitals</span>':groups.wb,
+ '<span style="color:#c9a7ef">Shared sites (SickKids, CAMH)</span>':groups.shared,
+ '<span style="color:#e6c84e">MSB + 3 UofT gyms</span>':campus,
+ 'Subway + 506 streetcar':subway,
+ 'Optimal living zones':zones,
+},{collapsed:false}).addTo(map);
+
+/* ===================== VIEW BUTTONS ===================== */
+const candBounds=L.latLngBounds(CAND.map(c=>[c.la,c.ln]));
+const allBounds=L.latLngBounds(HOSP.map(h=>[h.la,h.ln]).concat(CAND.map(c=>[c.la,c.ln])));
+const View=L.Control.extend({options:{position:'bottomright'},onAdd:function(){
+  const d=L.DomUtil.create('div','panel viewbtns');d.style.padding='6px';
+  d.innerHTML='<button id="vCand">Shortlist</button><button id="vAll">All sites</button>';
+  L.DomEvent.disableClickPropagation(d);
+  d.querySelector('#vCand').onclick=()=>map.fitBounds(candBounds.pad(0.15));
+  d.querySelector('#vAll').onclick=()=>map.fitBounds(allBounds.pad(0.08));
+  return d;
+}});
+map.addControl(new View());
+</script>
+</body>
+</html>
