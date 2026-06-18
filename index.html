@@ -57,18 +57,18 @@
   <button class="x" onclick="document.getElementById('info').classList.toggle('collapsed')">hide</button>
   <h1>Apartment Shortlist — WB-ranked</h1>
   <div class="body">
-    <p class="sub"><b>Ranked by modeled weekly commute</b> for a Wightman-Berris MS1: MSB (~3×/wk) + WB clinical sites (Toronto General + Toronto Western, ~2×/wk) + <b>the gym (6×/wk)</b>, with floor-based elevator time included. Click a pin for the breakdown + live listing.</p>
-    <p><b style="color:var(--t1)">● Tier 1</b> lowest commute · <b style="color:var(--t2)">● Tier 2</b> mid · <b style="color:var(--t3)">● Tier 3</b> highest</p>
-    <p class="sub" style="margin-top:8px">🏋 <b>The gym is the swing factor.</b> Only <b>488 University</b> has a confirmed real in-building gym, so its 6×/wk gym trip is ~0 → lowest total (~221 min/wk). Everywhere else means trekking to the UofT AC/Goldring, which is why central-but-gym-far picks (e.g. 111 Elizabeth) rank low — unless their gym turns out real on tour.</p>
-    <p class="sub" style="margin-top:6px">⚠ Schedule came from one WB student at Toronto Western (west); your clinical site may be Mount Sinai / Toronto General (central) — a TGH↔TWH shuttle exists. Yellow dashed = WB sites; red dashed = 506 streetcar.</p>
+    <p class="sub"><b>Ranked by modeled weekly commute</b> for a Wightman-Berris MS1: MSB (~3×/wk) + WB clinical sites (TGH + Toronto Western, ~2×/wk) + <b>gym (3×/wk)</b>, with floor-based elevator time. A real in-building gym = elevator-only gym leg. Click a pin for the breakdown + live listing.</p>
+    <p><b style="color:var(--t1)">● Tier A</b> lowest (real in-building gym) · <b style="color:var(--t2)">● Tier B</b> mid · <b style="color:var(--t3)">● Tier C</b> highest / conditional</p>
+    <p class="sub" style="margin-top:8px">🏋 <b>The gym is the swing factor — but read this as TIERS, not a strict 1-11</b> (mid-tier picks sit within ~20 min = noise). Real in-building gyms (488, 1001 Bay) win. <b>111 Elizabeth</b> is the best hospital spot and jumps to Tier A IF its weight room is real — so verify it.</p>
+    <p class="sub" style="margin-top:6px">⚠ Gym freq is an assumption (3×/wk); raise it and in-building-gym picks pull further ahead. Schedule = one WB student at Toronto Western; your site may be central (Mount Sinai/TGH); TGH↔TWH shuttle exists. Yellow dashed = WB sites; red dashed = 506 streetcar.</p>
   </div>
 </div>
 
 <div id="legend" class="panel">
   <h2>Legend</h2>
-  <div class="row"><span class="dot" style="background:var(--t1)"></span> Tier 1 — lowest weekly commute</div>
-  <div class="row"><span class="dot" style="background:var(--t2)"></span> Tier 2 — mid</div>
-  <div class="row"><span class="dot" style="background:var(--t3)"></span> Tier 3 — highest</div>
+  <div class="row"><span class="dot" style="background:var(--t1)"></span> Tier A — lowest (in-building gym)</div>
+  <div class="row"><span class="dot" style="background:var(--t2)"></span> Tier B — mid</div>
+  <div class="row"><span class="dot" style="background:var(--t3)"></span> Tier C — highest / conditional</div>
   <div class="grp">
     <div class="row"><span style="width:16px;height:0;border-top:2px dashed #ffd24d;flex:none"></span> WB in-person triangle</div>
     <div class="row"><span style="width:16px;height:0;border-top:2px dashed #e0242a;flex:none"></span> 506 streetcar → Toronto Western</div>
@@ -116,65 +116,71 @@ function pop(role,color,title,body,meta){
 /* ===================== CANDIDATE SHORTLIST (12 units / 10 buildings) ===================== */
 const TC={1:C.t1,2:C.t2,3:C.t3};
 const TNAME={1:'TIER 1 — TOP PICK',2:'TIER 2 — STRONG',3:'TIER 3 — FINE'};
-// Ranked by modeled weekly commute (MSB 3x + Hospital[TGH+TWH] + Gym 6x, incl. floor-based elevator time)
+// Ranked by modeled weekly commute (MSB 3x + Hospital[TGH+TWH] + Gym 3x; in-building real gym = elevator-only; floor-based elevator time). Tiers A/B/C; intra-tier order is noise.
 const CAND=[
  {rank:1,tier:1,la:43.65503,ln:-79.38900,n:"488 University ★ seen",
   units:"#4609 · $2,400 · fl46 · 544 sqft · 1BD",
-  cw:"~221 min/wk — LOWEST · MSB 80 · Hosp 69 · Gym 72",
-  gym:"✅ Real gym (SkyClub @480 University, free): rack, barbells, dumbbells, pool — no AC trek.",
-  why:"You've seen & liked it. University Ave, St Patrick L1, ~6 min to TGH. Caveat: floor 46.",
+  cw:"~162 min/wk — LOWEST · MSB 80 · Hosp 69 · Gym 14",
+  gym:"✅ Real in-building gym (18-19th fl, you saw it): rack/barbells/dumbbells. NB: the separate 'SkyClub' commercial club is a PAID membership, not confirmed free.",
+  why:"Seen & liked. University Ave, St Patrick L1, ~6 min to TGH. ⚠ floor 46 — no lower-floor rental exists at 488, and it's above your parents' fl-15 cap.",
   url:"https://condos.ca/toronto/the-residences-of-488-university-avenue-488-university-ave/unit-4609-C13454062"},
- {rank:2,tier:1,la:43.65745,ln:-79.40166,n:"297 College",
+ {rank:2,tier:1,la:43.66542,ln:-79.38707,n:"1001 Bay (Club 1001)",
+  units:"studio #2213 · $2,100 · fl22 (497 sqft) · 1989",
+  cw:"~185 min/wk · MSB 79 · Hosp 94 · Gym 12",
+  gym:"✅ Real free weights in a 2nd-floor gym (confirmed). ⚠ a Nov-2024 bedbug report exists — ask mgmt for the pest-treatment record.",
+  why:"The real in-building gym is the draw; central Bay corridor. Only a studio is listed now (MLS C13172826).",
+  url:"https://condos.ca/toronto/1001-bay-1001-bay-st/unit-2213-C13172826"},
+ {rank:3,tier:2,la:43.65745,ln:-79.40166,n:"297 College",
   units:"#1008 · $2,450 · fl10 · 1+1 (500-599 sqft)",
-  cw:"~271 min/wk · MSB 86 · Hosp 56 · Gym 129",
-  gym:"❓ Own gym unverified — but Goldring/AC ~10 min, so the gym stays cheap.",
+  cw:"~207 min/wk · MSB 86 · Hosp 56 · Gym 65",
+  gym:"❓ Own gym unverified — but Goldring/AC ~10 min, so the gym leg stays cheap.",
   why:"On the 506 to Toronto Western; closest to the UofT gyms. ⚠ small 1+1 — verify a real bedroom.",
   url:"https://condos.ca/toronto/the-college-condominium-at-spadina-297-college-st/unit-1008-C13437058"},
- {rank:3,tier:2,la:43.66680,ln:-79.38867,n:"U Condos — 1080 Bay",
-  units:"#1808 · $2,450 · fl18 (corner)<br>#1005 · $2,080 · fl10 ⚠ furnished, bedroom locked off",
-  cw:"~350 min/wk · MSB 83 · Hosp 99 · Gym 168",
-  gym:"❓ 'Cardio & weights' room, no rack/barbell confirmed → likely AC trek (×6).",
-  why:"Cleanest building (Pemberton 2016). Verify #1808's bedroom is walled.",
-  url:"https://condos.ca/toronto/u-condominium-57-75-st-mary-st-1074-1086-bay-st/unit-1808-C13426474"},
  {rank:4,tier:2,la:43.66200,ln:-79.38650,n:"Burano — 832 Bay",
   units:"#501 · $2,300 · fl5 (612 sqft)",
-  cw:"~351 min/wk · MSB 54 · Hosp 74 · Gym 223",
-  gym:"❓ unconfirmed → Goldring trek (×6) drives the total up.",
+  cw:"~239 min/wk · MSB 54 · Hosp 74 · Gym 112",
+  gym:"❓ unconfirmed → Goldring trek.",
   why:"Closest to MSB; central, clean Lanterra 2012. Only a low-floor unit (fl5).",
   url:"https://condos.ca/toronto/burano-on-bay-832-bay-st/unit-501-C13219866"},
  {rank:5,tier:2,la:43.66479,ln:-79.38697,n:"The Britt — 955 Bay",
   units:"#1715 · $2,490 · fl17 · 1+1 (500-599)",
-  cw:"~361 min/wk · MSB 72 · Hosp 90 · Gym 200",
+  cw:"~261 min/wk · MSB 72 · Hosp 90 · Gym 100",
   gym:"❓ cardio-leaning (yoga + spin) → AC/Goldring trek likely.",
   why:"Lanterra 5/5, Wellesley station. ⚠ small 1+1 — verify a real bedroom.",
   url:"https://condos.ca/toronto/the-britt-condos-955-bay-st-995-bay-st/unit-1715-C13415056"},
- {rank:6,tier:2,la:43.66681,ln:-79.38753,n:"Polo Club — 1055 Bay",
+ {rank:6,tier:2,la:43.66680,ln:-79.38867,n:"U Condos — 1080 Bay",
+  units:"#1808 · $2,450 · fl18 (corner)<br>#1005 · $2,080 · fl10 ⚠ furnished, bedroom locked off",
+  cw:"~266 min/wk · MSB 83 · Hosp 99 · Gym 84",
+  gym:"❓ 'Cardio & weights' room, no rack/barbell confirmed → likely trek.",
+  why:"Cleanest building (Pemberton 2016). Verify #1808's bedroom is walled.",
+  url:"https://condos.ca/toronto/u-condominium-57-75-st-mary-st-1074-1086-bay-st/unit-1808-C13426474"},
+ {rank:7,tier:2,la:43.65759,ln:-79.38361,n:"Minto Plaza — 38 Elm",
+  units:"#2507 · $2,349 · fl25 · ~750 sqft (biggest)",
+  cw:"~275 min/wk · MSB 85 · Hosp 80 · Gym ~110",
+  gym:"🟡 partial in-building gym (dumbbells 75lb + benches + machines, NO barbell/rack) → barbell days still at AC.",
+  why:"Biggest unit by far (~750 sqft = real bedroom); high floor (25).",
+  url:"https://condos.ca/toronto/minto-plaza-38-elm-st/unit-2507-C13447476"},
+ {rank:8,tier:2,la:43.66681,ln:-79.38753,n:"Polo Club — 1055 Bay",
   units:"#1209 · $2,350 · fl12 · 1+1, 600-699 (utils incl)<br>#809 · $2,000 · fl8 (value)",
-  cw:"~368 min/wk · MSB 86 · Hosp 100 · Gym 183",
+  cw:"~277 min/wk · MSB 86 · Hosp 100 · Gym 91",
   gym:"❓ gym + squash, unconfirmed → Goldring trek.",
   why:"SAFEST real bedroom (1987 build = real walls). Quiet Tridel.",
   url:"https://condos.ca/toronto/polo-club-i-1055-bay-st/unit-1209-C13425618"},
- {rank:7,tier:3,la:43.66562,ln:-79.38262,n:"50 Wellesley E",
+ {rank:9,tier:3,la:43.65505,ln:-79.38475,n:"111 Elizabeth (One City Hall)",
+  units:"#1620 · $2,500 · fl16 · 1+1 (600-699 sqft), parking",
+  cw:"~329 min/wk — but ~240 IF its weight room is real · MSB 91 · Hosp 77 · Gym 161",
+  gym:"❓ Has a DEDICATED weight room — VERIFY it (call the building); a rack/barbell jumps this to Tier A.",
+  why:"BEST hospital location (next to TGH + SickKids). Gym distance is its only weakness — the gym tour decides it.",
+  url:"https://condos.ca/toronto/one-city-hall-place-111-elizabeth-st/unit-1620-C13451102"},
+ {rank:10,tier:3,la:43.66562,ln:-79.38262,n:"50 Wellesley E",
   units:"#807 · $2,300 · fl8 · 1+1 (500-599)",
-  cw:"~466 min/wk · MSB 100 · Hosp 106 · Gym 259",
+  cw:"~336 min/wk · MSB 100 · Hosp 106 · Gym 130",
   gym:"❓ unconfirmed → long Goldring trek.",
   why:"NE corner; furthest Yonge-side from the WB University-Ave sites.",
   url:"https://condos.ca/toronto/1605-wellesley-street-east-toronto/unit-807-C13221042"},
- {rank:8,tier:3,la:43.65759,ln:-79.38361,n:"Minto Plaza — 38 Elm",
-  units:"#2507 · $2,349 · fl25 · ~750 sqft (biggest)",
-  cw:"~481 min/wk · MSB 85 · Hosp 80 · Gym 316",
-  gym:"🟡 best condo gym of the rest (dumbbells 75lb + benches + machines) but NO barbell/rack → still AC for barbell days.",
-  why:"Biggest unit by far (~750 sqft = real bedroom); high floor (25).",
-  url:"https://condos.ca/toronto/minto-plaza-38-elm-st/unit-2507-C13447476"},
- {rank:9,tier:3,la:43.65505,ln:-79.38475,n:"111 Elizabeth (One City Hall)",
-  units:"#1620 · $2,500 · fl16 · 1+1 (600-699 sqft), parking",
-  cw:"~489 min/wk — but ~240 IF its weight room is real · MSB 91 · Hosp 77 · Gym 321",
-  gym:"❓ Has a DEDICATED weight room — verify it; a rack/barbell would jump this to ~#2.",
-  why:"Best hospital location (next to TGH). Gym distance is its only weakness — the gym tour decides it.",
-  url:"https://condos.ca/toronto/one-city-hall-place-111-elizabeth-st/unit-1620-C13451102"},
- {rank:10,tier:3,la:43.66889,ln:-79.38353,n:"55C — 55 Charles E",
+ {rank:11,tier:3,la:43.66889,ln:-79.38353,n:"55C — 55 Charles E",
   units:"#807 · $2,500 · fl8 (south-facing, 9ft ceilings)",
-  cw:"~489 min/wk · MSB 121 · Hosp 122 · Gym 247",
+  cw:"~366 min/wk · MSB 121 · Hosp 122 · Gym 124",
   gym:"🟡 'olympic lifting area' claim unverified (evidence was a different club).",
   why:"New (2024), south-facing (CN-Tower/light), Bloor-Yonge subway; furthest from the WB sites.",
   url:"https://condos.ca/toronto/55c-condos-55-charles-st-e/unit-807-C13219244"},
