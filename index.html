@@ -113,29 +113,29 @@ function pop(role,color,title,body,meta){
     ${meta?`<div class="pp-meta">${meta}</div>`:''}`;
 }
 
-/* ===================== CANDIDATE SHORTLIST (12 units / 10 buildings) ===================== */
-const TC={1:C.t1,2:C.t2,3:C.t3};
-const TNAME={1:'TIER 1 — TOP PICK',2:'TIER 2 — STRONG',3:'TIER 3 — FINE'};
-// Ranked by modeled weekly commute (MSB 3x + Hospital[TGH+TWH] + Gym 3x; in-building real gym = elevator-only; floor-based elevator time). Tiers A/B/C; intra-tier order is noise.
+/* ===================== CANDIDATE SHORTLIST ===================== */
+const TC={0:'#8a8f98',1:C.t1,2:C.t2,3:C.t3};
+const TNAME={0:'LEASED — watching for re-list',1:'TIER A — lowest commute',2:'TIER B — strong',3:'TIER C — higher / conditional'};
+// Ranked by modeled weekly commute (MSB 3x + Hospital[TGH+TWH] + Gym 3x; in-building real gym = elevator-only; floor-based elevator time). Read as TIERS A/B/C, not a strict ordinal.
 const CAND=[
- {rank:1,tier:1,la:43.65503,ln:-79.38900,n:"488 University ★ seen",
-  units:"#4609 · $2,400 · fl46 · 544 sqft · 1BD",
-  cw:"~162 min/wk — LOWEST · MSB 80 · Hosp 69 · Gym 14",
-  gym:"✅ Real in-building gym (18-19th fl, you saw it): rack/barbells/dumbbells. NB: the separate 'SkyClub' commercial club is a PAID membership, not confirmed free.",
-  why:"Seen & liked. University Ave, St Patrick L1, ~6 min to TGH. ⚠ floor 46 — no lower-floor rental exists at 488, and it's above your parents' fl-15 cap.",
-  url:"https://condos.ca/toronto/the-residences-of-488-university-avenue-488-university-ave/unit-4609-C13454062"},
- {rank:2,tier:1,la:43.66542,ln:-79.38707,n:"1001 Bay (Club 1001)",
+ {rank:1,tier:1,la:43.66542,ln:-79.38707,n:"1001 Bay (Club 1001)",
   units:"studio #2213 · $2,100 · fl22 (497 sqft) · 1989",
   cw:"~185 min/wk · MSB 79 · Hosp 94 · Gym 12",
   gym:"✅ Real free weights in a 2nd-floor gym (confirmed). ⚠ a Nov-2024 bedbug report exists — ask mgmt for the pest-treatment record.",
-  why:"The real in-building gym is the draw; central Bay corridor. Only a studio is listed now (MLS C13172826).",
+  why:"Top AVAILABLE real-in-building-gym pick; central Bay corridor. Only a studio is listed now (MLS C13172826).",
   url:"https://condos.ca/toronto/1001-bay-1001-bay-st/unit-2213-C13172826"},
- {rank:3,tier:2,la:43.65745,ln:-79.40166,n:"297 College",
+ {rank:2,tier:2,la:43.65745,ln:-79.40166,n:"297 College",
   units:"#1008 · $2,450 · fl10 · 1+1 (500-599 sqft)",
   cw:"~207 min/wk · MSB 86 · Hosp 56 · Gym 65",
   gym:"❓ Own gym unverified — but Goldring/AC ~10 min, so the gym leg stays cheap.",
   why:"On the 506 to Toronto Western; closest to the UofT gyms. ⚠ small 1+1 — verify a real bedroom.",
   url:"https://condos.ca/toronto/the-college-condominium-at-spadina-297-college-st/unit-1008-C13437058"},
+ {rank:3,tier:2,la:43.66548,ln:-79.38332,n:"22 Wellesley E ★ liked",
+  units:"#2002 · $2,500 · fl20 · 1+1 · 577 sqft, parking",
+  cw:"~215 min/wk IF its gym is real (else ~331) · MSB 98 · Hosp 105 · Gym 11/127",
+  gym:"👍 You rate the gym nice — verify it has a rack/barbell (vs machines+dumbbells). Real → Tier B; machines-only → trek to UofT gym. NB: the nearby Mattamy Athletic Centre is TMU's (paid for non-TMU).",
+  why:"You liked it; 1+1 with parking. Church-Wellesley (east). ⚠ a bedbug-registry history exists — ask mgmt for the record.",
+  url:"https://condos.ca/toronto/22-condominiums-22-wellesley-st-e/unit-2002-C13447720"},
  {rank:4,tier:2,la:43.66200,ln:-79.38650,n:"Burano — 832 Bay",
   units:"#501 · $2,300 · fl5 (612 sqft)",
   cw:"~239 min/wk · MSB 54 · Hosp 74 · Gym 112",
@@ -184,11 +184,17 @@ const CAND=[
   gym:"🟡 'olympic lifting area' claim unverified (evidence was a different club).",
   why:"New (2024), south-facing (CN-Tower/light), Bloor-Yonge subway; furthest from the WB sites.",
   url:"https://condos.ca/toronto/55c-condos-55-charles-st-e/unit-807-C13219244"},
+ {rank:0,tier:0,la:43.65503,ln:-79.38900,n:"488 University — LEASED",
+  units:"#4609 · was $2,400 · fl46 — TAKEN ~June 20",
+  cw:"Was #1 (~162 min/wk) — the one that got away; you've set a re-list alert.",
+  gym:"✅ Real in-building gym (18-19th fl, you saw it). If another 488 unit re-lists, grab it — the gym + University-Ave location are the draw.",
+  why:"Leased before you could sign. Watching for another unit (any floor) to come back.",
+  url:"https://condos.ca/toronto/the-residences-of-488-university-avenue-488-university-ave"},
 ];
 const candLayer=L.layerGroup();
 CAND.forEach(c=>{
-  L.marker([c.la,c.ln],{icon:candIcon(TC[c.tier],c.rank)}).bindPopup(
-    pop(TNAME[c.tier],TC[c.tier],`#${c.rank} ${c.n}`,
+  L.marker([c.la,c.ln],{icon:candIcon(TC[c.tier],c.tier===0?'✕':c.rank)}).bindPopup(
+    pop(TNAME[c.tier],TC[c.tier],`${c.tier===0?'':'#'+c.rank+' '}${c.n}`,
       `${c.units}
        <div style="margin-top:6px"><b style="color:#fff">⏱ ${c.cw}</b></div>
        <div style="margin-top:4px;font-size:11.5px">${c.gym}</div>
