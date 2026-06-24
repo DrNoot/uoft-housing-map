@@ -250,8 +250,8 @@ L.polyline(LINE2,{color:'#21b35a',weight:4,opacity:.9}).bindTooltip('Line 2 — 
 /* ===================== LIVING ZONES ===================== */
 const fitzZone=L.polygon([[43.6655,-79.3895],[43.6650,-79.3745],[43.6515,-79.3735],[43.6515,-79.3895]],
   {color:C.fitz,weight:1.5,fillColor:C.fitz,fillOpacity:0.14}).bindPopup(pop('LIVING ZONE',C.fitz,"Optimal for FitzGerald","Downtown-east core near St. Mike's + MSB."));
-const wbZone=L.polygon([[43.6700,-79.4120],[43.6690,-79.3855],[43.6515,-79.3850],[43.6520,-79.4110]],
-  {color:C.wb,weight:1.5,fillColor:C.wb,fillOpacity:0.12}).bindPopup(pop('LIVING ZONE',C.wb,"Optimal for Wightman-Berris","University corridor west to Annex/Harbord/Kensington."));
+const wbZone=L.polygon([[43.6660,-79.4035],[43.6665,-79.3835],[43.6515,-79.3838],[43.6512,-79.4035]],
+  {color:C.wb,weight:1.5,fillColor:C.wb,fillOpacity:0.12}).bindPopup(pop('LIVING ZONE',C.wb,"Optimal for Wightman-Berris (updated 2026-06)","Centred on the University Ave Discovery District (TGH / Mount Sinai / Toronto Rehab) + the College corridor — within ~15 min of MSB and the WB clinical sites, and on the 506 streetcar to Toronto Western. West edge (College/Spadina) suits a Toronto Western assignment; east edge (University/Bay) the central sites. Pulled SOUTH from the old Annex/Bathurst zone, which sat too far from where WB actually meets."));
 const zones=L.layerGroup([wbZone,fitzZone]);
 
 /* ===================== WB COMMUTE TRIANGLE + 506 STREETCAR ===================== */
